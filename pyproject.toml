@@ -7,11 +7,11 @@ name = "bayesian-regime-hmm"
 version = "0.1.0"
 description = "Bayesian regime-switching HMM: Gibbs sampling with FFBS, diagnostics, and a causal backtest"
 requires-python = ">=3.10"
-dependencies = ["numpy", "matplotlib"]
+dependencies = ["numpy", "pandas", "matplotlib"]
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
-real-data = ["yfinance", "pandas"]
+real-data = ["yfinance"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

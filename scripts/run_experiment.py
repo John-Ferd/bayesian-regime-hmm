@@ -27,6 +27,7 @@ from bayes_hmm.diagnostics import summarize
 
 ap = argparse.ArgumentParser(description=__doc__)
 ap.add_argument("--ticker", default=None)
+ap.add_argument("--csv", default=None, help="daily price CSV (Date + Adj Close/Close); use with --ticker for the name")
 ap.add_argument("--chains", type=int, default=4)
 ap.add_argument("--n-iter", type=int, default=2000)
 ap.add_argument("--burn-in", type=int, default=500)
@@ -40,7 +41,7 @@ tag = f"_{args.ticker}" if args.ticker else ("" if args.train_days == 2000 else 
 
 TRUE = {"mu": (-0.0015, 0.0008), "sigma": (0.020, 0.008), "A": ((0.97, 0.03), (0.01, 0.99))}
 if args.ticker:
-    y_all, _ = load_returns(args.ticker)
+    y_all, _ = load_returns(args.ticker, csv=args.csv)
     split = int(0.7 * len(y_all))
     y_train, test_paths, truth = y_all[:split], [y_all[split:]], None
 else:

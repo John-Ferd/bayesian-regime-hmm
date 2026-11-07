@@ -17,5 +17,5 @@ experiment:   # ~2.5 minutes
 scarce:       # same, with only 250 training days
 	$(PY) scripts/run_experiment.py --train-days 250
 
-spy:          # needs: pip install -e ".[real-data]" and internet access
-	$(PY) scripts/run_experiment.py --ticker SPY
+spy:          # uses data/SPY.csv if present, else downloads (pip install -e ".[real-data]")
+	$(PY) scripts/run_experiment.py --ticker SPY $(if $(wildcard data/SPY.csv),--csv data/SPY.csv,)

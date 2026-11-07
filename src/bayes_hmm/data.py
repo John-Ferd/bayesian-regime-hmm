@@ -26,11 +26,26 @@ def simulate_regimes(T: int = 2500, mu=(-0.0015, 0.0008), sigma=(0.020, 0.008),
     return y, s
 
 
-def load_returns(ticker: str = "SPY", start: str = "2005-01-01", end: str | None = None):
-    """Daily log returns from Yahoo Finance (needs `pip install yfinance` and internet)."""
-    import yfinance as yf
+def load_returns(ticker: str = "SPY", start: str = "2005-01-01", end: str | None = None, csv: str | None = None):
+    """Daily log returns of a price series.
 
-    px = yf.download(ticker, start=start, end=end, auto_adjust=True, progress=False)["Close"]
-    px = px.squeeze().dropna()
+    With ``csv``: a file of daily prices with a Date column and an "Adj Close"
+    (preferred, adjusted for dividends and splits) or "Close" column, e.g. the
+    download from Yahoo Finance's Historical Data page. Without it: download
+    from Yahoo Finance (needs `pip install yfinance` and internet).
+    """
+    import pandas as pd
+
+    if csv is not None:
+        df = pd.read_csv(csv, parse_dates=["Date"]).sort_values("Date").set_index("Date")
+        col = "Adj Close" if "Adj Close" in df.columns else "Close"
+        px = pd.to_numeric(df[col], errors="coerce").dropna()
+        px = px[px.index >= pd.Timestamp(start)]
+        if end is not None:
+            px = px[px.index <= pd.Timestamp(end)]
+    else:
+        import yfinance as yf
+
+        px = yf.download(ticker, start=start, end=end, auto_adjust=True, progress=False)["Close"].squeeze().dropna()
     r = np.log(px).diff().dropna()
     return r.to_numpy(), r.index
