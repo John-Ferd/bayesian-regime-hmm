@@ -41,6 +41,7 @@ from bayes_hmm.backtest import (
     vol_target_positions,
 )
 from bayes_hmm.diagnostics import summarize
+from bayes_hmm.env import environment
 
 TRAIN_END, VAL_END = 2012, 2018
 RULES = ("hard", "soft", "soft_confident")
@@ -162,6 +163,7 @@ def main():
         "posterior_full_sample_4_chains": {f"K{K}": rows for K, rows in posterior.items()},
         "yearly_posterior_means": {f"K{K}": v for K, v in yearly_params.items()},
     }
+    res["environment"] = environment()
     (out_dir / f"results_{args.ticker}.json").write_text(json.dumps(res, indent=2))
 
     print(f"chosen on validation: {chosen}")
