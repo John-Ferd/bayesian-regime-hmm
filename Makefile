@@ -1,6 +1,6 @@
 PY ?= python
 
-.PHONY: setup test lint experiment scarce spy
+.PHONY: setup test lint spy
 
 setup:
 	$(PY) -m pip install -e ".[dev]"
@@ -11,11 +11,5 @@ test:
 lint:
 	$(PY) -m ruff check src scripts tests
 
-experiment:   # ~2.5 minutes
-	$(PY) scripts/run_experiment.py
-
-scarce:       # same, with only 250 training days
-	$(PY) scripts/run_experiment.py --train-days 250
-
-spy:          # uses data/SPY.csv if present, else downloads (pip install -e ".[real-data]")
-	$(PY) scripts/run_experiment.py --ticker SPY $(if $(wildcard data/SPY.csv),--csv data/SPY.csv,)
+spy:          # downloads SPY 2000-2026 into data/ on first run, then uses the cached copy
+	$(PY) scripts/run_spy.py
