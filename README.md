@@ -1,6 +1,10 @@
 # bayesian-regime-hmm
 
+[![CI](https://github.com/John-Ferd/bayesian-regime-hmm/actions/workflows/ci.yml/badge.svg)](https://github.com/John-Ferd/bayesian-regime-hmm/actions/workflows/ci.yml) ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
+
 A two-regime ("bull" / "bear") hidden Markov model for daily returns, fitted the Bayesian way. A Gibbs sampler draws whole regime paths with **forward-filtering backward-sampling (FFBS)** and draws the parameters from conjugate **Dirichlet** and **Normal-Inverse-Gamma** posteriors. Everything is written from scratch in NumPy. The project then asks a practical question: does a trading rule that switches out of the market in the bear regime actually help, and does Bayesian uncertainty add anything over a single point estimate?
+
+> **Project history:** first built earlier in 2026. In November 2026 it was rebuilt into a tested, reproducible package and published here, so the commit history starts then. All numbers in this README come from this published version.
 
 ## In one paragraph
 
@@ -47,6 +51,23 @@ So the honest conclusion is that in this setup, parameter uncertainty is useful 
 <p align="center"><img src="artifacts/backtest.png" width="75%"></p>
 
 **Caveat:** the data was simulated from the same kind of model, with a bear regime that really does lose money. That is the best case for this strategy. It shows the method works when its assumptions hold, not that it would beat the real market.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph G["Gibbs sampler, one sweep"]
+    S["FFBS<br/>sample regime path"] --> A["sample A<br/>Dirichlet"]
+    A --> N["sample μ, σ²<br/>Normal-Inverse-Gamma"]
+    N --> L["relabel<br/>bull / bear"]
+  end
+  R["daily returns<br/>synthetic or CSV"] --> S
+  L -->|"repeat"| S
+  L --> DG["diagnostics<br/>R-hat · ESS · traces"]
+  L --> PD["posterior draws"]
+  PD --> F["causal filter<br/>P(bull tomorrow) from data up to today"]
+  F --> B["backtest vs buy-and-hold<br/>20 test paths"]
+```
 
 ## How it works
 
