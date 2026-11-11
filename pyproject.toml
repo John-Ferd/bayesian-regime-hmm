@@ -5,13 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "bayesian-regime-hmm"
 version = "0.1.0"
-description = "Bayesian regime-switching HMM: Gibbs sampling with FFBS, diagnostics, and a causal backtest"
+description = "Bayesian regime-switching HMM on real SPY data: Gibbs sampling with FFBS, diagnostics, walk-forward backtest"
 requires-python = ">=3.10"
-dependencies = ["numpy", "pandas", "matplotlib"]
+dependencies = ["numpy", "pandas", "matplotlib", "yfinance"]
 
 [project.optional-dependencies]
 dev = ["pytest", "ruff"]
-real-data = ["yfinance"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

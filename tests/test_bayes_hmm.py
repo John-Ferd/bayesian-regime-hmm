@@ -1,7 +1,14 @@
 import numpy as np
 
 from bayes_hmm import Prior, backtest, gibbs_hmm, predictive_bull_prob, simulate_regimes
-from bayes_hmm.backtest import performance
+from bayes_hmm.backtest import (
+    block_bootstrap_sharpe_diff,
+    exposure,
+    normalized_entropy,
+    performance,
+    predictive_state_prob,
+    vol_target_positions,
+)
 from bayes_hmm.diagnostics import ess, split_rhat
 from bayes_hmm.gibbs import _relabel, ffbs, nig_posterior
 
@@ -92,3 +99,40 @@ def test_diagnostics_on_iid_draws():
     x = np.random.default_rng(0).normal(size=(4, 2000))
     assert split_rhat(x) < 1.01
     assert 0.85 * 8000 < ess(x) < 1.15 * 8000
+
+
+def test_state_forecast_rows_are_distributions_and_match_bull_prob():
+    y, _ = simulate_regimes(T=200, seed=6)
+    p = predictive_state_prob(y, MU, np.sqrt(S2), A)
+    np.testing.assert_allclose(p.sum(axis=1), 1.0)
+    np.testing.assert_allclose(p[:, 1], predictive_bull_prob(y, MU, np.sqrt(S2), A))
+
+
+def test_gibbs_runs_with_three_states_and_orders_them_by_volatility():
+    y, _ = simulate_regimes(T=600, mu=(-0.002, 0.0, 0.001), sigma=(0.03, 0.012, 0.006),
+                            A=((0.95, 0.04, 0.01), (0.02, 0.96, 0.02), (0.01, 0.02, 0.97)), seed=8)
+    out = gibbs_hmm(y, K=3, n_iter=100, burn_in=100, seed=0)
+    assert out["mu"].shape == (100, 3)
+    assert np.all(np.diff(out["sigma"], axis=1) <= 0)          # state 0 = most turbulent
+
+
+def test_exposure_rules():
+    p = np.array([[0.9, 0.1], [0.2, 0.8], [0.5, 0.5]])
+    np.testing.assert_array_equal(exposure(p, "hard"), [0.0, 1.0, 0.0])
+    np.testing.assert_allclose(exposure(p, "soft"), [0.1, 0.8, 0.5])
+    # a 50/50 forecast is maximally uncertain, so the confidence-scaled rule holds nothing
+    assert np.isclose(exposure(p, "soft_confident")[2], 0.0)
+    np.testing.assert_allclose(normalized_entropy(np.array([[1.0, 0.0], [0.5, 0.5]])), [0.0, 1.0], atol=1e-9)
+
+
+def test_vol_target_is_causal_and_capped():
+    y = np.random.default_rng(0).normal(0, 0.01, 300)
+    full, short = vol_target_positions(y, 0.10), vol_target_positions(y[:200], 0.10)
+    np.testing.assert_allclose(full[:200], short)
+    assert full.max() <= 1.0
+
+
+def test_bootstrap_interval_contains_the_point_estimate():
+    rng = np.random.default_rng(1)
+    res = block_bootstrap_sharpe_diff(rng.normal(5e-4, 0.01, 1000), rng.normal(0, 0.01, 1000), n_boot=300)
+    assert res["ci95"][0] <= res["diff"] <= res["ci95"][1]

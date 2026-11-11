@@ -1,5 +1,5 @@
-"""Bayesian 2-regime Gaussian HMM fitted by Gibbs sampling with
-forward-filtering backward-sampling (FFBS)."""
+"""Bayesian K-regime Gaussian HMM fitted by Gibbs sampling with
+forward-filtering backward-sampling (FFBS), applied to real market data."""
 
 from .backtest import backtest, predictive_bull_prob
 from .data import load_returns, simulate_regimes
